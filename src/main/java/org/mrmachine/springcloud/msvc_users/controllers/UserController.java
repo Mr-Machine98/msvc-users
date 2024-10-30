@@ -84,7 +84,7 @@ public class UserController {
 			if ( !user.getEmail().equalsIgnoreCase(currentUser.getEmail()) && !user.getEmail().isEmpty() && this.service.existsByEmail(user.getEmail()) ) {
 				return ResponseEntity
 						.badRequest()
-						.body(Collections.singletonMap("message", "The field email has already been setted with that value."));
+						.body(Collections.singletonMap("message", "The field email has already been setted with that value!."));
 			}
 			
 			currentUser.setName(user.getName());
