@@ -4,6 +4,8 @@ FROM maven:3.6-openjdk-17-slim as builder
 WORKDIR /app/msvc-users
 # no hablitar -> WORKDIR /app
 
+ARG MSVC_NAME=msvc-users
+
 # Importante: como son proyectos anidados este docker file
 # depende de un proyecto padre lo que significa que necesita
 # el pom del padre y obviamente el pom del hijo para descargar las
@@ -16,9 +18,9 @@ WORKDIR /app/msvc-users
 # Mejora para cuando hacemos un cambio en el proyecto no vuelve a descargar las dependecias de nuevo
 # pasamos los poms en orden jerarquico
 COPY ./pom.xml /app
-COPY ./msvc-users/.mvn ./.mvn
-COPY ./msvc-users/mvnw .
-COPY ./msvc-users/pom.xml .
+COPY ./${MSVC_NAME}/.mvn ./.mvn
+COPY ./${MSVC_NAME}/mvnw .
+COPY ./${MSVC_NAME}/pom.xml .
 
 # no hablitar -> COPY ./target/msvc-users-0.0.1-SNAPSHOT.jar .
 
@@ -35,7 +37,7 @@ RUN mvn clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackag
 
 # Esto es por si ya se descargaron las dependencias solo copie el cambio
 # en el proyecto y compile
-COPY ./msvc-users/src ./src
+COPY ./${MSVC_NAME}/src ./src
 RUN mvn clean package -DskipTests
 
 # --------------------------------------------------------------------------------
@@ -44,12 +46,21 @@ RUN mvn clean package -DskipTests
 # a la imagen de aqui abajo
 FROM maven:3.6-openjdk-17-slim 
 
+ARG MSVC_NAME=msvc-users
+ARG TARGET_FOLDER=/app/${MSVC_NAME}/target
+
 WORKDIR /app
 
 RUN mkdir ./logs
 
-COPY --from=builder /app/msvc-users/target/msvc-users-0.0.1-SNAPSHOT.jar .
+COPY --from=builder ${TARGET_FOLDER}/msvc-users-0.0.1-SNAPSHOT.jar .
 
-EXPOSE 8001
+ARG PORT_APP=8001
+
+# ENViRONMENT VARIABLES
+ENV PORT=${PORT_APP}
+
+EXPOSE ${PORT}
+
 #ENTRYPOINT [ "java", "-jar", "msvc-users-0.0.1-SNAPSHOT.jar"]
 CMD [ "java", "-jar", "msvc-users-0.0.1-SNAPSHOT.jar"]
